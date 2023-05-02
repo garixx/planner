@@ -56,7 +56,7 @@ class MyHomePage extends StatefulWidget {
   State<MyHomePage> createState() => _MyHomePageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
+class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
   bool _showChart = false;
   final _uuid = Uuid();
   final List<Transaction> _transactions2 = [];
@@ -108,6 +108,23 @@ class _MyHomePageState extends State<MyHomePage> {
         date: DateTime.now()),
   ];
 
+  @override
+  void initState() {
+    WidgetsBinding.instance.addObserver(this);
+    super.initState();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    print(state);
+  }
+
+  @override
+  dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
   List<Transaction> get _recentTransactions {
     return _transactions.where((tx) {
       return tx.date.isAfter(DateTime.now().subtract(Duration(days: 5)));
@@ -139,6 +156,41 @@ class _MyHomePageState extends State<MyHomePage> {
     setState(() {
       _transactions.removeWhere((tx) => tx.id == id);
     });
+  }
+
+  Widget _buildLandscapeContent() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Text(
+          "Show chart",
+          style: Theme.of(context).textTheme.titleMedium,
+        ),
+        Switch.adaptive(
+          value: _showChart,
+          onChanged: (bool value) {
+            setState(() {
+              _showChart = value;
+            });
+          },
+        ),
+      ],
+    );
+  }
+
+  List<Widget> _buildPortraitContent(MediaQueryData mediaQueryData,
+      AppBar androidNavBar, Container txListWidget) {
+    return [
+      Container(
+        height: (mediaQueryData.size.height -
+                mediaQueryData.padding.top -
+                androidNavBar.preferredSize.height) *
+            0.3,
+        width: double.infinity,
+        child: Chart(_recentTransactions),
+      ),
+      txListWidget
+    ];
   }
 
   @override
@@ -180,34 +232,8 @@ class _MyHomePageState extends State<MyHomePage> {
           //mainAxisAlignment: MainAxisAlignment.spaceAround,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
-            if (isLandscape)
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    "Show chart",
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                  Switch.adaptive(
-                    value: _showChart,
-                    onChanged: (bool value) {
-                      setState(() {
-                        _showChart = value;
-                      });
-                    },
-                  ),
-                ],
-              ),
-            if (!isLandscape)
-              Container(
-                height: (mediaQueryData.size.height -
-                        mediaQueryData.padding.top -
-                        androidNavBar.preferredSize.height) *
-                    0.3,
-                width: double.infinity,
-                child: Chart(_recentTransactions),
-              ),
-            if (!isLandscape) txListWidget,
+            if (isLandscape) _buildLandscapeContent(),
+            if (!isLandscape) ..._buildPortraitContent(mediaQueryData, androidNavBar, txListWidget),
             if (isLandscape)
               _showChart
                   ? Container(

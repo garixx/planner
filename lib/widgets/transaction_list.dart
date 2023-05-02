@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
-import 'package:planner/models/transaction.dart';
+import '../models/transaction.dart';
+import '../widgets/transaction_item.dart';
 
 class TransactionList extends StatelessWidget {
   final List<Transaction> _transactions;
@@ -31,48 +31,24 @@ class TransactionList extends StatelessWidget {
               ],
             );
           })
-        : ListView.builder(
-            itemBuilder: (ctx, index) {
-              return Card(
-                elevation: 5,
-                margin: EdgeInsets.symmetric(vertical: 3, horizontal: 5),
-                child: ListTile(
-                  leading: CircleAvatar(
-                    radius: 30,
-                    child: Padding(
-                      padding: const EdgeInsets.all(6.0),
-                      child: FittedBox(
-                          child: Text(
-                              "\$${_transactions[index].amount.toStringAsFixed(2)}")),
-                    ),
-                  ),
-                  title: Text(
-                    _transactions[index].title,
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                  subtitle: Text(
-                    DateFormat.yMMMd().format(_transactions[index].date),
-                    style: TextStyle(
-                      color: Colors.grey,
-                    ),
-                  ),
-                  trailing: MediaQuery.of(context).size.width > 500
-                      ? OutlinedButton.icon(
-                          icon: Icon(Icons.delete),
-                          label: Text("Delete"),
-                          onPressed: () =>
-                              _deleteTransaction(_transactions[index].id),
-                        )
-                      : IconButton(
-                          icon: Icon(Icons.delete),
-                          color: Theme.of(context).colorScheme.error,
-                          onPressed: () =>
-                              _deleteTransaction(_transactions[index].id),
-                        ),
-                ),
-              );
-            },
-            itemCount: _transactions.length,
+        : ListView(
+            children: _transactions
+                .map((tx) => TransactionItem(
+                      key: ValueKey(tx.id),
+                      transaction: tx,
+                      deleteTransaction: _deleteTransaction,
+                    ))
+                .toList(),
           );
+    // : ListView.builder(
+    //     itemBuilder: (ctx, index) {
+    //       return TransactionItem(
+    //           key: Key("xxx"),
+    //           transaction: _transactions[index],
+    //           deleteTransaction: _deleteTransaction,
+    //       );
+    //     },
+    //     itemCount: _transactions.length,
+    //   );
   }
 }
